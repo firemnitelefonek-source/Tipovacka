@@ -146,7 +146,13 @@ async function loadTips() {
   div.innerHTML = "";
 
   data.forEach(t => {
-    div.innerHTML += `<div><b>${t.name}</b>: ${JSON.stringify(t.tips)}</div>`;
+    let text = `<b>${t.name}</b>: `;
+
+    for (const matchId in t.tips) {
+      text += `Zápas ${matchId}: ${t.tips[matchId]} | `;
+    }
+
+    div.innerHTML += `<div>${text}</div>`;
   });
 }
   
