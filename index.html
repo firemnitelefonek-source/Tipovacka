@@ -24,7 +24,15 @@
 const SUPABASE_URL = "https://bcfohzblwjrjsjisbvgc.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjZm9oemJsd2pyanNqaXNidmdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODA2MzEsImV4cCI6MjA5NDg1NjYzMX0.nre93MtfapvEkOpZKREUCZQMcWgoSWbUpb3ZzclFlBE";
 
+
 async function save() {
+  const now = new Date();
+
+  if (now > DEADLINE) {
+    alert("Tipování je uzavřené!");
+    return;
+  }
+
   const name = document.getElementById("name").value;
   const tip1 = document.getElementById("tip1").value;
 
@@ -43,7 +51,8 @@ async function save() {
 
   load();
 }
-
+``
+  
 async function load() {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/tips?select=*`, {
     headers: {
