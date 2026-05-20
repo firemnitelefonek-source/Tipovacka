@@ -133,26 +133,40 @@ async function save() {
 
 // ✅ načtení tipů
 async function loadTips() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/tips?select=*`, {
+  // načti zápasy
+  const matchesRes = await fetch(`${SUPABASE_URL}/rest/v1/matches?select=*`, {
     headers: {
       apikey: SUPABASE_KEY,
       Authorization: `Bearer ${SUPABASE_KEY}`
     }
   });
 
-  const data = await res.json();
+  const matches = await matchesRes.json();
+
+  // načti tipy
+  const tipsRes = await fetch(`${SUPABASE_URL}/rest/v1/tips?select=*`, {
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`
+    }
+  });
+
+  const tips = await tipsRes.json();
 
   const div = document.getElementById("list");
   div.innerHTML = "";
 
-  data.forEach(t => {
-    let text = `<b>${t.name}</b>: `;
+  // 🔥 pro každý zápas zvlášť
+  matches.forEach(match => {
+    let html = `<h3>${match.name}</h3>`;
 
-    for (const matchId in t.tips) {
-      text += `Zápas ${matchId}: ${t.tips[matchId]} | `;
-    }
+    tips.forEach(t => {
+      if (t.tips && t.tips[match.id]) {
+        html += `<div><b>${t.name}</b>: ${t.tips[match.id]}</div>`;
+      }
+    });
 
-    div.innerHTML += `<div>${text}</div>`;
+    div.innerHTML += html + "<br>";
   });
 }
   
