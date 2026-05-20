@@ -8,14 +8,22 @@
 
 <h1>🏒 Tipovačka</h1>
 
+<button onclick="toggleAdmin()">🔑 Admin</button>
+
+<div id="admin" style="display:none; border:1px solid #ccc; padding:10px; margin:10px 0;">
+  <h3>Admin panel</h3>
+  <input id="matchName" placeholder="Název zápasu"><br><br>
+  <input id="matchTime" type="datetime-local"><br><br>
+  <button onclick="addMatch()">Přidat zápas</button>
+</div>
+
+<hr>
+
 <input id="name" placeholder="Tvoje jméno"><br><br>
 
-<div>
-  Česko vs Kanada:<br>
-  <input id="tip1" placeholder="např. 3:2">
-</div><br>
+<div id="matches"></div>
 
-<button onclick="save()">Uložit</button>
+<button onclick="save()">Uložit tip</button>
 
 <h2>Tipy všech</h2>
 <div id="list"></div>
@@ -24,17 +32,83 @@
 const SUPABASE_URL = "https://bcfohzblwjrjsjisbvgc.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjZm9oemJsd2pyanNqaXNidmdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODA2MzEsImV4cCI6MjA5NDg1NjYzMX0.nre93MtfapvEkOpZKREUCZQMcWgoSWbUpb3ZzclFlBE";
 
-
-async function save() {
-  const now = new Date();
-
-  if (now > DEADLINE) {
-    alert("Tipování je uzavřené!");
-    return;
+// ✅ ADMIN toggle
+function toggleAdmin() {
+  const pass = prompt("Zadej heslo");
+  if (pass === "1234") {
+    document.getElementById("admin").style.display = "block";
   }
+}
 
+// ✅ přidání zápasu
+async function addMatch() {
+  const name = document.getElementById("matchName").value;
+  const time = document.getElementById("matchTime").value;
+
+  await fetch(`${SUPABASE_URL}/rest/v1/matches`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`
+    },
+    body: JSON.stringify({
+      name: name,
+      deadline: time
+    })
+  });
+
+  loadMatches();
+}
+
+// ✅ načtení zápasů
+async function loadMatches() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/matches?select=*`, {
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`
+    }
+  });
+
+  const data = await res.json();
+
+  const div = document.getElementById("matches");
+  div.innerHTML = "";
+
+  data.forEach(m => {
+    const locked = new Date() > new Date(m.deadline);
+
+    div.innerHTML += `
+      <div>
+        <b>${m.name}</b><br>
+        <small>${new Date(m.deadline).toLocaleString()}</small><br>
+        <input id="tip_${m.id}" ${locked ? "disabled" : ""} placeholder="např. 3:2">
+        ${locked ? "<span style='color:red'> Zamčeno</span>" : ""}
+      </div><br>
+    `;
+  });
+}
+
+// ✅ uložit tip
+async function save() {
   const name = document.getElementById("name").value;
-  const tip1 = document.getElementById("tip1").value;
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/matches?select=*`, {
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`
+    }
+  });
+
+  const matches = await res.json();
+  const tips = {};
+
+  matches.forEach(m => {
+    const input = document.getElementById(`tip_${m.id}`);
+    if (input && input.value) {
+      tips[m.id] = input.value;
+    }
+  });
 
   await fetch(`${SUPABASE_URL}/rest/v1/tips`, {
     method: "POST",
@@ -44,16 +118,16 @@ async function save() {
       Authorization: `Bearer ${SUPABASE_KEY}`
     },
     body: JSON.stringify({
-      name: name,
-      tips: { match1: tip1 }
+      name,
+      tips
     })
   });
 
-  load();
+  loadTips();
 }
-``
-  
-async function load() {
+
+// ✅ načtení tipů
+async function loadTips() {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/tips?select=*`, {
     headers: {
       apikey: SUPABASE_KEY,
@@ -63,15 +137,16 @@ async function load() {
 
   const data = await res.json();
 
-  const list = document.getElementById("list");
-  list.innerHTML = "";
+  const div = document.getElementById("list");
+  div.innerHTML = "";
 
   data.forEach(t => {
-    list.innerHTML += `<div><b>${t.name}</b>: ${t.tips.match1}</div>`;
+    div.innerHTML += `<div><b>${t.name}</b>: ${JSON.stringify(t.tips)}</div>`;
   });
 }
 
-load();
+loadMatches();
+loadTips();
 </script>
 
 </body>
