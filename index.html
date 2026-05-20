@@ -187,14 +187,18 @@ async function loadTips() {
   matches.forEach(match => {
     let html = `<h3>${match.name}</h3>`;
 
-    tips.forEach(t => {
-      if (t.tips && t.tips[match.id]) {
-        html += `<div><b>${t.name}</b>: ${t.tips[match.id]}</div>`;
-      }
-    });
+    function deleteTip(name) {
+  const pass = prompt("Admin heslo");
 
-    div.innerHTML += html + "<br>";
-  });
+  if (pass !== "1234") return;
+
+  fetch(`${SUPABASE_URL}/rest/v1/tips?name=eq.${name}`, {
+    method: "DELETE",
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`
+    }
+  }).then(loadTips);
 }
   
 // ✅ úprava zápasu
