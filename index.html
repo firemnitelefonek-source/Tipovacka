@@ -149,10 +149,6 @@ async function loadTips() {
     div.innerHTML += `<div><b>${t.name}</b>: ${JSON.stringify(t.tips)}</div>`;
   });
 }
-
-loadMatches();
-loadTips();
-</script>
 // ✅ úprava zápasu
 function editMatch(id, oldName, oldDeadline) {
   const newName = prompt("Nový název:", oldName);
@@ -187,5 +183,9 @@ function deleteMatch(id) {
   }).then(loadMatches);
 }
   
+loadMatches();
+loadTips();
+</script>
+
 </body>
 </html>
